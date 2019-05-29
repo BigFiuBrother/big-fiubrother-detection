@@ -1,3 +1,2 @@
-include big_fiubrother_detection/*.graph
-include big_fiubrother_detection/*.caffemodel
-include big_fiubrother_detection/*.prototxt
+include big_fiubrother_detection/config/*
+include big_fiubrother_detection/model/*

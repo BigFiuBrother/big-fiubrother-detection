@@ -1,3 +1,6 @@
 *.pyc
 output
 .idea
+dist
+build
+big_fiubrother_detection.egg-info

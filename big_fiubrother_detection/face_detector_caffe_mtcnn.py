@@ -17,7 +17,7 @@ class FaceDetectorCaffeMTCNN:
 
         caffe.set_mode_cpu()
 
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.dirname(os.path.realpath(__file__)) + "/model"
         self.PNet = caffe.Net(dir_path + "/pnet.prototxt", dir_path + "/pnet.caffemodel", caffe.TEST)
         self.RNet = caffe.Net(dir_path + "/rnet.prototxt", dir_path + "/rnet.caffemodel", caffe.TEST)
         self.ONet = caffe.Net(dir_path + "/onet.prototxt", dir_path + "/onet.caffemodel", caffe.TEST)

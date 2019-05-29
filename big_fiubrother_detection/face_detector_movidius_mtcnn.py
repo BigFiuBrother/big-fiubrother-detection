@@ -11,7 +11,7 @@ class FaceDetectorMovidiusMTCNN:
 
     def __init__(self, movidius_id_pnet=0, movidius_id_onet=1):
 
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.dirname(os.path.realpath(__file__)) + "/model"
 
         #self.minsize = 20
         self.threshold = [0.6, 0.7, 0.7]
