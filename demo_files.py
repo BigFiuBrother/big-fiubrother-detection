@@ -2,8 +2,9 @@ import sys
 import cv2
 import os
 import time
-import importlib
 import shutil
+import yaml
+from big_fiubrother_detection.face_detector_factory import FaceDetectorFactory
 
 
 def drawBoxes(im, boxes):
@@ -40,32 +41,29 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
 
         print("--------------------------------")
-        print("This script receives a model folder and a list of images and detects faces using mtcnn")
+        print("This script receives a config file and a list of images and detects faces in every image according to config.")
+        print("Bonding box info is saved to 'output' folder.")
         print("")
         print("Usage: ")
-        print("python demo_files.py 'network_folder' 'image_path1' 'image_path2' ... ")
+        print("python demo_files.py 'config_ssd.yaml' 'image_path1' 'image_path2' ... ")
         print("--------------------------------")
 
     else:
 
-        #minsize = 20
-        #threshold = [0.6, 0.7, 0.7]
-        #factor = 0.709
-
-        # Init mtcnnMock
-        network_folder = sys.argv[1]
-        FaceDetector = getattr(importlib.import_module(network_folder + ".FaceDetector"), "FaceDetector")
-        model_folder = network_folder + "/model"
+        config_file_path = sys.argv[1]
+        with open(config_file_path) as config_file:
+            settings = yaml.load(config_file)
 
         # Get output folder
-        if not os.path.exists("output"):
-            os.mkdir("output")
-        output_folder = "output/" + network_folder
+        output_folder_base = "output"
+        if not os.path.exists(output_folder_base):
+            os.mkdir(output_folder_base)
+        output_folder = output_folder_base + "/" + settings['face_detector']['type']
         if not os.path.exists(output_folder):
             os.mkdir(output_folder)
 
         # Create Face Detector
-        faceDetectorObject = FaceDetector(model_folder)
+        faceDetectorObject = FaceDetectorFactory.build(settings['face_detector'])
 
         # Get Images
         image_paths = sys.argv[2:]
@@ -108,8 +106,7 @@ if __name__ == "__main__":
         output_csv.close()
 
         # Save cropped faces to folder
-
-        faces_folder = "output/" + network_folder + "/faces"
+        faces_folder = output_folder + "/faces"
         if os.path.exists(faces_folder):
             shutil.rmtree(faces_folder)
         os.mkdir(faces_folder)

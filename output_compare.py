@@ -16,7 +16,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 4:
 
         print("--------------------------------")
-        print("This script receives files with validation bboxes and test bboxes and shows them in red and green respectively")
+        print("This script receives files with validation bboxes and test bboxes and shows them in green and red respectively")
         print("")
         print("Usage: ")
         print("python compare_outputs.py 'bb_file_val' 'bb_file_test' 'image_path1' 'image_path2' ... ")

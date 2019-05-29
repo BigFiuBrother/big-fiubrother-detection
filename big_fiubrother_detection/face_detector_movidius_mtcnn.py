@@ -3,13 +3,15 @@
 
 import cv2
 import numpy as np
-#import caffe
+import os
 from mvnc import mvncapi as mvnc
 
 
-class FaceDetector:
+class FaceDetectorMovidiusMTCNN:
 
-    def __init__(self, caffe_model_path):
+    def __init__(self, movidius_id_pnet=0, movidius_id_onet=1):
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
 
         #self.minsize = 20
         self.threshold = [0.6, 0.7, 0.7]
@@ -17,16 +19,15 @@ class FaceDetector:
 
         # Get Movidius Devices
         devices = mvnc.EnumerateDevices()
-        if len(devices) < 2:
+        if len(devices) < max(movidius_id_pnet, movidius_id_onet)+1:
             print('Not enough devices found')
             quit()
 
         # Load PNet Graph
-        pnet_graph_filename = caffe_model_path + "/pnet.graph"
-        with open(pnet_graph_filename, mode='rb') as rf:
+        with open(dir_path + "/pnet.graph", mode='rb') as rf:
             pgraphfile = rf.read()
 
-        self.PNetDevice = mvnc.Device(devices[0])
+        self.PNetDevice = mvnc.Device(devices[movidius_id_pnet])
         self.PNetDevice.OpenDevice()
 
         self.PNet = self.PNetDevice.AllocateGraph(pgraphfile)
@@ -36,11 +37,10 @@ class FaceDetector:
         #self.RNet = caffe.Net(caffe_model_path + "/rnet.prototxt", caffe_model_path + "/rnet.caffemodel", caffe.TEST)
 
         # Load ONet Graph
-        onet_graph_filename = caffe_model_path + "/onet.graph"
-        with open(onet_graph_filename, mode='rb') as rf:
+        with open(dir_path + "/onet.graph", mode='rb') as rf:
             ographfile = rf.read()
 
-        self.ONetDevice = mvnc.Device(devices[1])
+        self.ONetDevice = mvnc.Device(devices[movidius_id_onet])
         self.ONetDevice.OpenDevice()
 
         self.ONet = self.ONetDevice.AllocateGraph(ographfile)
@@ -51,13 +51,22 @@ class FaceDetector:
         self.ONet.DeallocateGraph()
         self.ONetDevice.CloseDevice()
 
-    def imresample(self, img, sz):
+    def detect_face_image(self, img):
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        return self._detect_face(img_rgb)
+
+    def detect_face(self, imgpath):
+
+        img = cv2.imread(imgpath)
+        return self.detect_face_image(img)
+
+    def _imresample(self, img, sz):
         # @UndefinedVariable
         im_data = cv2.resize(img, (sz[1], sz[0]), interpolation=cv2.INTER_AREA)
         return im_data
 
     # function [boundingbox] = bbreg(boundingbox,reg)
-    def bbreg(self, boundingbox, reg):
+    def _bbreg(self, boundingbox, reg):
         # calibrate bounding boxes
         if reg.shape[1] == 1:
             reg = np.reshape(reg, (reg.shape[2], reg.shape[3]))
@@ -71,7 +80,7 @@ class FaceDetector:
         boundingbox[:, 0:4] = np.transpose(np.vstack([b1, b2, b3, b4]))
         return boundingbox
 
-    def generateBoundingBox(self, imap, reg, scale, t):
+    def _generateBoundingBox(self, imap, reg, scale, t):
         # use heatmap to generate bounding boxes
         stride = 2
         cellsize = 12
@@ -99,7 +108,7 @@ class FaceDetector:
         return boundingbox, reg
 
     # function pick = nms(boxes,threshold,type)
-    def nms(self, boxes, threshold, method):
+    def _nms(self, boxes, threshold, method):
         if boxes.size == 0:
             return np.empty((0, 3))
         x1 = boxes[:, 0]
@@ -132,7 +141,7 @@ class FaceDetector:
         return pick
 
     # function [dy edy dx edx y ey x ex tmpw tmph] = pad(total_boxes,w,h)
-    def pad(self, total_boxes, w, h):
+    def _pad(self, total_boxes, w, h):
         # compute the padding coordinates (pad the bounding boxes to square)
         tmpw = (total_boxes[:, 2] - total_boxes[:, 0] + 1).astype(np.int32)
         tmph = (total_boxes[:, 3] - total_boxes[:, 1] + 1).astype(np.int32)
@@ -167,7 +176,7 @@ class FaceDetector:
         return dy, edy, dx, edx, y, ey, x, ex, tmpw, tmph
 
     # function [bboxA] = rerec(bboxA)
-    def rerec(self, bboxA):
+    def _rerec(self, bboxA):
         # convert bboxA to square
         h = bboxA[:, 3] - bboxA[:, 1]
         w = bboxA[:, 2] - bboxA[:, 0]
@@ -177,7 +186,7 @@ class FaceDetector:
         bboxA[:, 2:4] = bboxA[:, 0:2] + np.transpose(np.tile(l, (2, 1)))
         return bboxA
 
-    def getPaddingSize(self, img):
+    def _getPaddingSize(self, img):
         h, w, _ = img.shape
         top, bottom, left, right = (0, 0, 0, 0)
 
@@ -193,16 +202,6 @@ class FaceDetector:
             pass
         return top, bottom, left, right
 
-    def detect_face_image(self, img):
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return self._detect_face(img_rgb)
-
-    def detect_face(self, imgpath):
-
-        img = cv2.imread(imgpath)
-        return self.detect_face_image(img)
-
-
     def _detect_face(self, img, threshold=[0.405, 0.8473], factor=0.709):
         w = 128
         h = 96
@@ -210,7 +209,7 @@ class FaceDetector:
         img = cv2.resize(img, (w, h))
 
         total_boxes = np.empty((0, 9))
-        im_data = self.imresample(img, (28, 38))
+        im_data = self._imresample(img, (28, 38))
         im_data = (im_data - 127.5) * 0.0078125
         img_x = np.expand_dims(im_data, 0)
         img_y = np.transpose(img_x, (0, 2, 1, 3))
@@ -219,9 +218,9 @@ class FaceDetector:
         out, userobj = self.PNet.GetResult()
         out = np.reshape(out, (1, 9, 14, 6))
 
-        boxes, _ = self.generateBoundingBox(out[0, :, :, 1] - out[0, :, :, 0], out[0, :, :, 2:].copy(), 0.3, threshold[0])
+        boxes, _ = self._generateBoundingBox(out[0, :, :, 1] - out[0, :, :, 0], out[0, :, :, 2:].copy(), 0.3, threshold[0])
         # inter-scale nms
-        pick = self.nms(boxes.copy(), 0.5, 'Union')
+        pick = self._nms(boxes.copy(), 0.5, 'Union')
         if boxes.size > 0 and pick.size > 0:
             boxes = boxes[pick, :]
             total_boxes = np.append(total_boxes, boxes, axis=0)
@@ -229,7 +228,7 @@ class FaceDetector:
         total_boxes = np.asarray(total_boxes)
         numbox = total_boxes.shape[0]
         if numbox > 0:
-            pick = self.nms(total_boxes.copy(), 0.7, 'Union')
+            pick = self._nms(total_boxes.copy(), 0.7, 'Union')
             total_boxes = total_boxes[pick, :]
             regw = total_boxes[:, 2] - total_boxes[:, 0]
             regh = total_boxes[:, 3] - total_boxes[:, 1]
@@ -239,9 +238,9 @@ class FaceDetector:
             qq4 = total_boxes[:, 3] + total_boxes[:, 8] * regh
             total_boxes = np.transpose(
                 np.vstack([qq1, qq2, qq3, qq4, total_boxes[:, 4]]))
-            total_boxes = self.rerec(total_boxes.copy())
+            total_boxes = self._rerec(total_boxes.copy())
             total_boxes[:, 0:4] = np.fix(total_boxes[:, 0:4]).astype(np.int32)
-            dy, edy, dx, edx, y, ey, x, ex, tmpw, tmph = self.pad(
+            dy, edy, dx, edx, y, ey, x, ex, tmpw, tmph = self._pad(
                 total_boxes.copy(), w, h)
 
         numbox = total_boxes.shape[0]
@@ -252,7 +251,7 @@ class FaceDetector:
                 tmp = np.zeros((int(tmph[k]), int(tmpw[k]), 3))
                 tmp[dy[k] - 1:edy[k], dx[k] - 1:edx[k], :] = img[y[k] - 1:ey[k], x[k] - 1:ex[k], :]
                 if tmp.shape[0] > 0 and tmp.shape[1] > 0 or tmp.shape[0] == 0 and tmp.shape[1] == 0:
-                    tempimg[:, :, :, k] = self.imresample(tmp, (48, 48))
+                    tempimg[:, :, :, k] = self._imresample(tmp, (48, 48))
 
                 else:
                     return np.empty()
@@ -276,8 +275,8 @@ class FaceDetector:
             w = total_boxes[:, 2] - total_boxes[:, 0] + 1
             h = total_boxes[:, 3] - total_boxes[:, 1] + 1
             if total_boxes.shape[0] > 0:
-                total_boxes = self.bbreg(total_boxes.copy(), np.transpose(mv))
-                pick = self.nms(total_boxes.copy(), 0.7, 'Min')
+                total_boxes = self._bbreg(total_boxes.copy(), np.transpose(mv))
+                pick = self._nms(total_boxes.copy(), 0.7, 'Min')
                 total_boxes = total_boxes[pick, :]
 
         rects = [(int(max(0, rect[0]) * scale_factor), int(max(0, rect[1]) * scale_factor),
@@ -285,6 +284,3 @@ class FaceDetector:
                  total_boxes]
 
         return rects
-
-
-

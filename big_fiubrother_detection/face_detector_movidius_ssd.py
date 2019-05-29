@@ -3,30 +3,35 @@
 
 import cv2
 import numpy as np
+import os
 from mvnc import mvncapi as mvnc
 
 
-class FaceDetector:
+class FaceDetectorMovidiusSSD:
 
-    def __init__(self, model_path):
+    def __init__(self, movidius_id=0, longrange=False):
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
 
         # Define constants
-
         self.NETWORK_INPUT_SIZE = 300
         self.NETWORK_OUTPUT_SIZE = 707
 
         # Get Movidius Devices
         devices = mvnc.EnumerateDevices()
-        if len(devices) < 1:
+        if len(devices) < movidius_id+1:
             print('Not enough devices found')
             quit()
 
         # Load SSD Graph
-        graph_filename = model_path + "/ssd.graph"
-        with open(graph_filename, mode='rb') as rf:
+        if longrange:
+            graphfile = dir_path + "/ssd_longrange.graph"
+        else:
+            graphfile = dir_path + "/ssd.graph"
+        with open(graphfile, mode='rb') as rf:
             graphfile = rf.read()
 
-        self.SSDGraphDevice = mvnc.Device(devices[0])
+        self.SSDGraphDevice = mvnc.Device(devices[movidius_id])
         self.SSDGraphDevice.OpenDevice()
 
         self.SSDGraph = self.SSDGraphDevice.AllocateGraph(graphfile)
@@ -47,7 +52,7 @@ class FaceDetector:
         out, userobj = self.SSDGraph.GetResult()
         out = out.tolist()
 
-        probs, boxes = self.get_detection_boxes(out, img_width, img_height, 0.2)
+        probs, boxes = self._get_detection_boxes(out, img_width, img_height, 0.2)
 
         return boxes
 
@@ -56,7 +61,7 @@ class FaceDetector:
         img = cv2.imread(imgpath)
         return self.detect_face_image(img)
 
-    def get_detection_boxes(self, predictions, w, h, thresh):
+    def _get_detection_boxes(self, predictions, w, h, thresh):
         num = predictions[0]
         score = 0
         cls = 0

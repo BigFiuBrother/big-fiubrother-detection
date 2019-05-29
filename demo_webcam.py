@@ -1,9 +1,10 @@
 import sys
 import cv2
-import os
 import time
-import importlib
-from FaceDetectorThread import FaceDetectorThread
+import yaml
+from big_fiubrother_detection.face_detector_thread import FaceDetectorThread
+from big_fiubrother_detection.face_detector_factory import FaceDetectorFactory
+
 
 def drawBoxes(im, boxes, color):
     x1 = [i[0] for i in boxes]
@@ -20,21 +21,22 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
 
         print("--------------------------------")
-        print("This script receives a model folder and a list of images and detects faces using mtcnn")
+        print("This script receives a config file and displays a webcam feed with overlaid face detection.")
+        print("Press 'q' to quit.")
         print("")
         print("Usage: ")
-        print("python demo_webcam.py 'network_folder'")
+        print("python demo_webcam.py 'config_ssd.yaml'")
         print("--------------------------------")
 
     else:
 
-        # Init mtcnnMock
-        network_folder = sys.argv[1]
-        FaceDetector = getattr(importlib.import_module(network_folder + ".FaceDetector"), "FaceDetector")
-        model_folder = network_folder + "/model"
+        config_file_path = sys.argv[1]
+        with open(config_file_path) as config_file:
+            settings = yaml.load(config_file)
 
         # Create Face Detector
-        faceDetectorObject = FaceDetector(model_folder)
+        faceDetectorObject = FaceDetectorFactory.build(settings['face_detector'])
+
         faceDetectorThread = FaceDetectorThread(faceDetectorObject)
         faceDetectorThread.start()
 

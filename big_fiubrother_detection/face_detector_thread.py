@@ -2,12 +2,12 @@ import threading
 
 class FaceDetectorThread(threading.Thread):
 
-    def __init__(self, faceDetector):
+    def __init__(self, face_detector):
         threading.Thread.__init__(self)
 
         self.end_event = threading.Event()
 
-        self.faceDetectorObject = faceDetector
+        self.face_detector_object = face_detector
 
         self.image_event = threading.Event()
         self.image = None
@@ -27,7 +27,7 @@ class FaceDetectorThread(threading.Thread):
 
             # Bloqueo los bounding boxes
             self.rects_event.clear()
-            self.rects = self.faceDetectorObject.detect_face_image(self.image)
+            self.rects = self.face_detector_object.detect_face_image(self.image)
             print("Found " + str(len(self.rects)) + " faces")
 
             # Libero imagen

@@ -4,20 +4,23 @@
 import cv2
 import numpy as np
 import caffe
+import os
 
 
-class FaceDetector:
+class FaceDetectorCaffeMTCNN:
 
-    def __init__(self, caffe_model_path):
+    def __init__(self):
 
         self.minsize = 20
         self.threshold = [0.6, 0.7, 0.7]
         self.factor = 0.709
 
         caffe.set_mode_cpu()
-        self.PNet = caffe.Net(caffe_model_path + "/pnet.prototxt", caffe_model_path + "/pnet.caffemodel", caffe.TEST)
-        self.RNet = caffe.Net(caffe_model_path + "/rnet.prototxt", caffe_model_path + "/rnet.caffemodel", caffe.TEST)
-        self.ONet = caffe.Net(caffe_model_path + "/onet.prototxt", caffe_model_path + "/onet.caffemodel", caffe.TEST)
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        self.PNet = caffe.Net(dir_path + "/pnet.prototxt", dir_path + "/pnet.caffemodel", caffe.TEST)
+        self.RNet = caffe.Net(dir_path + "/rnet.prototxt", dir_path + "/rnet.caffemodel", caffe.TEST)
+        self.ONet = caffe.Net(dir_path + "/onet.prototxt", dir_path + "/onet.caffemodel", caffe.TEST)
 
     def close(self):
         pass
