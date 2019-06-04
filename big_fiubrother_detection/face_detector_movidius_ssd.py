@@ -11,7 +11,7 @@ class FaceDetectorMovidiusSSD:
 
     def __init__(self, movidius_id=0, longrange=False):
 
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.dirname(os.path.realpath(__file__)) + "/model"
 
         # Define constants
         self.NETWORK_INPUT_SIZE = 300

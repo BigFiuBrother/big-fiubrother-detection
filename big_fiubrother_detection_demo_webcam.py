@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import cv2
 import time
@@ -21,21 +23,27 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
 
         print("--------------------------------")
-        print("This script receives a config file and displays a webcam feed with overlaid face detection.")
+        print("This script receives a face detectory type and displays a webcam feed with overlaid face detection.")
         print("Press 'q' to quit.")
         print("")
         print("Usage: ")
-        print("python demo_webcam.py 'config_ssd.yaml'")
+        print("python demo_webcam.py ['mvds_ssd' | 'mvds_ssd_longrange' | 'mvds_mtcnn' | 'caffe_mtcnn']")
         print("--------------------------------")
 
     else:
 
-        config_file_path = sys.argv[1]
-        with open(config_file_path) as config_file:
-            settings = yaml.load(config_file)
-
         # Create Face Detector
-        faceDetectorObject = FaceDetectorFactory.build(settings['face_detector'])
+        face_detector_type = sys.argv[1]
+        if face_detector_type == "mvds_ssd":
+            faceDetectorObject = FaceDetectorFactory.build_movidius_ssd()
+        elif face_detector_type == "mvds_ssd_longrange":
+            faceDetectorObject = FaceDetectorFactory.build_movidius_ssd_longrange()
+        elif face_detector_type == "mvds_mtcnn":
+            faceDetectorObject = FaceDetectorFactory.build_movidius_mtcnn()
+        elif face_detector_type == "caffe_mtcnn":
+            faceDetectorObject = FaceDetectorFactory.build_caffe_mtcnn()
+        else:
+            print("ERROR: Invalid face detector type")
 
         faceDetectorThread = FaceDetectorThread(faceDetectorObject)
         faceDetectorThread.start()

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import cv2
 import os
@@ -41,29 +43,35 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
 
         print("--------------------------------")
-        print("This script receives a config file and a list of images and detects faces in every image according to config.")
-        print("Bonding box info is saved to 'output' folder.")
+        print("This script receives a face detector type and a list of images and detects faces in every image according to config.")
+        print("Bounding box info is saved to 'output/[face detector type]' folder.")
         print("")
         print("Usage: ")
-        print("python demo_files.py 'config_ssd.yaml' 'image_path1' 'image_path2' ... ")
+        print("python demo_files.py ['mvds_ssd' | 'mvds_ssd_longrange' | 'mvds_mtcnn' | 'caffe_mtcnn'] 'image_path1' 'image_path2' ... ")
         print("--------------------------------")
 
     else:
 
-        config_file_path = sys.argv[1]
-        with open(config_file_path) as config_file:
-            settings = yaml.load(config_file)
+        # Create Face Detector
+        face_detector_type = sys.argv[1]
+        if face_detector_type == "mvds_ssd":
+            faceDetectorObject = FaceDetectorFactory.build_movidius_ssd()
+        elif face_detector_type == "mvds_ssd_longrange":
+            faceDetectorObject = FaceDetectorFactory.build_movidius_ssd_longrange()
+        elif face_detector_type == "mvds_mtcnn":
+            faceDetectorObject = FaceDetectorFactory.build_movidius_mtcnn()
+        elif face_detector_type == "caffe_mtcnn":
+            faceDetectorObject = FaceDetectorFactory.build_caffe_mtcnn()
+        else:
+            print("ERROR: Invalid face detector type")
 
         # Get output folder
         output_folder_base = "output"
         if not os.path.exists(output_folder_base):
             os.mkdir(output_folder_base)
-        output_folder = output_folder_base + "/" + settings['face_detector']['type']
+        output_folder = output_folder_base + "/" + face_detector_type
         if not os.path.exists(output_folder):
             os.mkdir(output_folder)
-
-        # Create Face Detector
-        faceDetectorObject = FaceDetectorFactory.build(settings['face_detector'])
 
         # Get Images
         image_paths = sys.argv[2:]
