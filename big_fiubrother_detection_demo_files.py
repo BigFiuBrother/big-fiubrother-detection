@@ -47,7 +47,7 @@ if __name__ == "__main__":
         print("Bounding box info is saved to 'output/[face detector type]' folder.")
         print("")
         print("Usage: ")
-        print("python demo_files.py ['mvds_ssd' | 'mvds_ssd_longrange' | 'mvds_mtcnn' | 'caffe_mtcnn'] 'image_path1' 'image_path2' ... ")
+        print("python big_fiubrother_detection_demo_files.py ['mvds_ssd' | 'mvds_ssd_longrange' | 'mvds_mtcnn' | 'caffe_mtcnn'] 'image_path1' 'image_path2' ... ")
         print("--------------------------------")
 
     else:

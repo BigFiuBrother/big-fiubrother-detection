@@ -27,7 +27,7 @@ if __name__ == "__main__":
         print("Press 'q' to quit.")
         print("")
         print("Usage: ")
-        print("python demo_webcam.py ['mvds_ssd' | 'mvds_ssd_longrange' | 'mvds_mtcnn' | 'caffe_mtcnn']")
+        print("python big_fiubrother_detection_demo_webcam.py ['mvds_ssd' | 'mvds_ssd_longrange' | 'mvds_mtcnn' | 'caffe_mtcnn']")
         print("--------------------------------")
 
     else:

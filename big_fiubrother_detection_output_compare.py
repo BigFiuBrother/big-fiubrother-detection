@@ -21,7 +21,7 @@ if __name__ == "__main__":
         print("This script receives files with validation bboxes and test bboxes and shows them in green and red respectively")
         print("")
         print("Usage: ")
-        print("python compare_outputs.py 'bb_file_val' 'bb_file_test' 'image_path1' 'image_path2' ... ")
+        print("python big_fiubrother_detection_output_compare.py 'bb_file_val' 'bb_file_test' 'image_path1' 'image_path2' ... ")
         print("--------------------------------")
 
     else:
