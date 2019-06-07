@@ -42,6 +42,10 @@ class FaceDetectorMovidiusSSD:
         self.SSDGraphDevice.CloseDevice()
 
     def detect_face_image(self, img):
+
+        # no se si hace falta
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         img_height, img_width, img_channels = img.shape
         img = cv2.resize(img, (self.NETWORK_INPUT_SIZE, self.NETWORK_INPUT_SIZE))
         img = img - 127.5
