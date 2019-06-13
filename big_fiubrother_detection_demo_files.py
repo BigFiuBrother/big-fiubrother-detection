@@ -73,19 +73,23 @@ if __name__ == "__main__":
         if not os.path.exists(output_folder):
             os.mkdir(output_folder)
 
-        # Get Images
+        # Load Images
         image_paths = sys.argv[2:]
-        print("Length: " + str(len(image_paths)))
-
-        start_time = time.time()
-        # Detect Bounding Boxes
-        total_boxes = []
+        images = {}
         for i in range(len(image_paths)):
+            image_path = image_paths[i]
+            image = cv2.imread(image_path)
+            images[image_path] = image
+
+        # Detect Bounding Boxes
+        print("Length: " + str(len(image_paths)))
+        start_time = time.time()
+        total_boxes = []
+        for image_path in images:
             if i % 100 == 0:
                 print(i)
             # Detect face bounding boxes
-            image_path = image_paths[i]
-            boundingboxes = faceDetectorObject.detect_face(image_path)
+            boundingboxes = faceDetectorObject.detect_face_image(images[image_path])
             total_boxes.append(boundingboxes)
         elapsed_time = time.time() - start_time
         print("Total images: " + str(len(image_paths)) + ", Elapsed time: " + str(elapsed_time))
